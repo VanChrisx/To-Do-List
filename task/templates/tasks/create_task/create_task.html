@@ -1,0 +1,7 @@
+{% extends 'nav/nav.html' %} {% block content %}
+<h1>Create Task</h1>
+<form method="post">
+  {{error}} {% csrf_token %} {{form.as_p}}
+  <button>Create</button>
+</form>
+{% endblock %}
