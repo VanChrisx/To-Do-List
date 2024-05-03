@@ -1,7 +1,8 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
+from django.utils import timezone
 from .form import TaskForm
 from .models import Task
 # Create your views here.
@@ -97,3 +98,40 @@ def completed_tasks(request):
         tasks = Task.objects.filter(
             user=request.user, datecompleted__isnull=False)
         return render(request, 'tasks/completed_tasks/completed_tasks.html', {'tasks': tasks})
+
+
+def detail_task(request, task_id):
+    if request.method == 'GET':
+        task = get_object_or_404(Task, pk=task_id)
+        form = TaskForm(instance=task)
+        return render(request, 'tasks/detail_task/detail_task.html', {
+            'task': task,
+            'form': form
+        })
+    else:
+        try:
+            task = get_object_or_404(Task, pk=task_id)
+            form = TaskForm(request.POST, instance=task)
+            form.save()
+            return redirect('alltasks')
+        except ValueError:
+            return render(request, 'tasks/detail_tasks/detail_tasks.html', {
+                'task': task,
+                'form': form,
+                'error': 'Error updating task'
+            })
+
+
+def complete_task(request, task_id):
+    task = get_object_or_404(Task, pk=task_id, user=request.user)
+    if request.method == 'POST':
+        task.datecompleted = timezone.now()
+        task.save()
+        return redirect('home')
+
+
+def delete_task(request, task_id):
+    task = get_object_or_404(Task, pk=task_id, user=request.user)
+    if request.method == 'POST':
+        task.delete()
+        return redirect('home')
